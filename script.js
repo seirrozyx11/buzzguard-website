@@ -484,7 +484,6 @@ async function handleFormSubmission(form) {
     const feedbackData = {
       name: data.name.trim(),
       email: data.email.trim(),
-      contactNumber: data['Contact Number'] ? data['Contact Number'].trim() : '',
       message: data.message.trim()
     };
     
@@ -577,7 +576,9 @@ async function loadRecentFeedback() {
     
     if (response.ok) {
       const result = await response.json();
-      if (result.success && result.data) {
+      if (result.success && result.data && result.data.length > 0) {
+        // Cache API data in localStorage for persistence
+        setFeedback(result.data);
         renderFeedback(result.data);
         return;
       }
@@ -586,8 +587,9 @@ async function loadRecentFeedback() {
     console.warn('Failed to load recent feedback from API:', error);
   }
   
-  // Fallback to local storage
-  renderFeedback();
+  // Fallback to local storage if API fails
+  const localFeedback = getFeedback();
+  renderFeedback(localFeedback);
 }
 
 function showFormMessage(message, type = 'info') {
