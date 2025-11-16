@@ -515,15 +515,37 @@ async function handleFormSubmission(form) {
     submitButton.textContent = '✗ Failed to Send';
     submitButton.style.background = 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)';
     
-    // Show error message
-    if (error.message.includes('Too many')) {
-      showFormMessage('You\'ve submitted feedback recently. Please wait before submitting again.', 'warning');
-    } else if (error.message.includes('Duplicate')) {
-      showFormMessage('You\'ve already submitted similar feedback recently.', 'warning');
-    } else {
-      showFormMessage('Failed to submit feedback. Please try again later.', 'error');
+    // Show specific error messages based on error type
+    if (error.message.includes('Too many') || error.message.includes('rate limit')) {
+      showFormMessage('Too many submissions from your network. Please wait a moment before trying again.', 'warning');
+    } else if (error.message.includes('Duplicate') || error.message.includes('already submitted')) {
+      showFormMessage('You\'ve already submitted feedback recently. Please wait at least 1 hour before submitting again.', 'warning');
+    } else if (error.message.includes('at least 10 characters')) {
+      showFormMessage('Your message must be at least 10 characters long.', 'error');
+    } else if (error.message.includes('at least 2 characters')) {
+      showFormMessage('Your name must be at least 2 characters long.', 'error');
+    } else if (error.message.includes('valid email')) {
+      showFormMessage('Please provide a valid email address.', 'error');
+    } else if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
+      showFormMessage('Network error: Please check your internet connection and try again.', 'error');
+    } else if (error.message.includes('500')) {
+      showFormMessage('Server error: The backend is temporarily unavailable. Your feedback has been saved locally and will be submitted when the server is available.', 'warning');
       
-      // Fallback: store locally if API fails
+      // Fallback: store locally if server error
+      const fallbackItem = {
+        name: data.name.trim(),
+        email: data.email.trim(),
+        message: data.message.trim(),
+        time: new Date().toISOString(),
+        status: 'local_fallback'
+      };
+      addFeedback(fallbackItem);
+      renderFeedback();
+    } else {
+      // Generic error with more helpful message
+      showFormMessage(`Failed to submit: ${error.message || 'Please try again later or check your input.'}`, 'error');
+      
+      // Fallback: store locally for other errors
       const fallbackItem = {
         name: data.name.trim(),
         email: data.email.trim(),
@@ -550,20 +572,39 @@ async function submitFeedbackToAPI(feedbackData) {
     ? 'http://localhost:5000' 
     : 'https://buzzguard-backend.onrender.com';
   
-  const response = await fetch(`${API_BASE}/api/feedback`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(feedbackData)
-  });
-  
-  if (!response.ok) {
-    const errorData = await response.json();
-    throw new Error(errorData.message || `HTTP ${response.status}: ${response.statusText}`);
+  try {
+    const response = await fetch(`${API_BASE}/api/feedback`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(feedbackData),
+      // Add timeout to prevent hanging
+      signal: AbortSignal.timeout(15000) // 15 second timeout
+    });
+    
+    if (!response.ok) {
+      let errorData;
+      try {
+        errorData = await response.json();
+      } catch (e) {
+        // If response is not JSON, use status text
+        throw new Error(`Server error (${response.status}): ${response.statusText}`);
+      }
+      throw new Error(errorData.message || errorData.error || `HTTP ${response.status}: ${response.statusText}`);
+    }
+    
+    return await response.json();
+  } catch (error) {
+    // Handle specific error types
+    if (error.name === 'TimeoutError' || error.name === 'AbortError') {
+      throw new Error('Request timeout: The server took too long to respond. Please try again.');
+    } else if (error.message.includes('Failed to fetch') || error.name === 'NetworkError') {
+      throw new Error('Network error: Unable to connect to server. Please check your internet connection.');
+    }
+    // Re-throw original error
+    throw error;
   }
-  
-  return await response.json();
 }
 
 async function loadRecentFeedback() {
