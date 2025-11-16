@@ -5,21 +5,43 @@
 // ============================================
 document.addEventListener('DOMContentLoaded', () => {
   console.log('BuzzGuard website initialized');
+  
+  // Fix for mobile viewport height issues (address bar)
+  const setVH = () => {
+    const vh = window.innerHeight * 0.01;
+    document.documentElement.style.setProperty('--vh', `${vh}px`);
+  };
+  setVH();
+  window.addEventListener('resize', setVH, { passive: true });
+  window.addEventListener('orientationchange', setVH, { passive: true });
+  
   initAllFeatures();
 });
 
 function initAllFeatures() {
   initThemeToggle();
   initFirebase();
+  
+  // Detect mobile devices
+  const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || window.innerWidth < 768;
   const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  if (!reducedMotion) {
+  
+  // Disable heavy animations on mobile for better performance
+  if (!reducedMotion && !isMobile) {
     initMosquito();
     initLightning();
+    initDeviceSmoke();
   } else {
-    console.log('Reduced motion enabled — skipping swarm and lightning');
+    console.log('Mobile device or reduced motion — skipping heavy animations for better performance');
   }
+  
   initNavigation();
-  initScrollSnapping();
+  
+  // Only enable scroll snapping on desktop where it works better
+  if (!isMobile) {
+    initScrollSnapping();
+  }
+  
   initMobileMenu();
   initContactForm();
   initFeedbackStore();
@@ -27,7 +49,6 @@ function initAllFeatures() {
   initButtonEffects();
   initIntersectionObservers();
   initDeviceMockup();
-  initDeviceSmoke();
   initDownloadGate();
 }
 
@@ -74,6 +95,7 @@ function initThemeToggle() {
 let mosquitos = [];
 let swarmIntervals = [];
 let smokeIntervals = [];
+let lightningTimeout = null;
 
 function initMosquito() {
   const containerId = 'mosquito-swarm';
@@ -144,6 +166,28 @@ function startMosquitoAnimation() {
     smokeIntervals.push(smokeIv);
   });
 }
+
+function stopMosquitoAnimation() {
+  swarmIntervals.forEach(id => clearInterval(id));
+  swarmIntervals = [];
+  smokeIntervals.forEach(id => clearInterval(id));
+  smokeIntervals = [];
+}
+
+// Pause animations when page is hidden to save battery on mobile
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) {
+    stopMosquitoAnimation();
+    if (deviceSmokeInterval) clearInterval(deviceSmokeInterval);
+    if (lightningTimeout) clearTimeout(lightningTimeout);
+  } else {
+    // Restart animations when page is visible again (only if not mobile)
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || window.innerWidth < 768;
+    if (!isMobile && mosquitos.length > 0) {
+      startMosquitoAnimation();
+    }
+  }
+}, { passive: true });
 
 function flyToRandomPosition(m) {
   if (!m) return;
@@ -434,16 +478,27 @@ function initMobileMenu() {
   const navLinks = document.querySelector('.nav-links');
   const navbar = document.querySelector('.navbar');
   if (menuToggle && navLinks) {
-    menuToggle.addEventListener('click', () => {
-      navLinks.classList.toggle('active');
+    menuToggle.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const isActive = navLinks.classList.toggle('active');
+      // Prevent body scroll when mobile menu is open
+      if (isActive) {
+        document.body.style.overflow = 'hidden';
+      } else {
+        document.body.style.overflow = '';
+      }
     });
     document.querySelectorAll('.nav-link').forEach(link => {
       link.addEventListener('click', () => {
         navLinks.classList.remove('active');
+        document.body.style.overflow = '';
       });
     });
     document.addEventListener('click', (e) => {
-      if (navbar && !e.target.closest('.navbar')) navLinks.classList.remove('active');
+      if (navbar && !e.target.closest('.navbar') && navLinks.classList.contains('active')) {
+        navLinks.classList.remove('active');
+        document.body.style.overflow = '';
+      }
     });
   }
 }
