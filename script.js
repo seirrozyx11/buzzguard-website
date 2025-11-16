@@ -525,9 +525,9 @@ async function handleFormSubmission(form) {
       
       // Fallback: store locally if API fails
       const fallbackItem = {
-        name: feedbackData.name,
-        email: feedbackData.email,
-        message: feedbackData.message,
+        name: data.name.trim(),
+        email: data.email.trim(),
+        message: data.message.trim(),
         time: new Date().toISOString(),
         status: 'local_fallback'
       };
