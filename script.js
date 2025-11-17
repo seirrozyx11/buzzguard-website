@@ -513,7 +513,49 @@ function initContactForm() {
       e.preventDefault();
       await handleFormSubmission(contactForm);
     });
+    
+    // Initialize star rating
+    initStarRating();
   }
+}
+
+function initStarRating() {
+  const stars = document.querySelectorAll('.star-rating .star');
+  const ratingInput = document.getElementById('ratingValue');
+  
+  // Set all stars to active initially (5 stars)
+  stars.forEach(star => star.classList.add('active'));
+  
+  stars.forEach(star => {
+    // Hover effect
+    star.addEventListener('mouseenter', () => {
+      const value = parseInt(star.dataset.value);
+      highlightStars(stars, value);
+    });
+    
+    // Click to select rating
+    star.addEventListener('click', () => {
+      const value = parseInt(star.dataset.value);
+      ratingInput.value = value;
+      highlightStars(stars, value);
+    });
+  });
+  
+  // Reset to selected value on mouse leave
+  document.querySelector('.star-rating').addEventListener('mouseleave', () => {
+    const currentValue = parseInt(ratingInput.value);
+    highlightStars(stars, currentValue);
+  });
+}
+
+function highlightStars(stars, count) {
+  stars.forEach((star, index) => {
+    if (index < count) {
+      star.classList.add('active');
+    } else {
+      star.classList.remove('active');
+    }
+  });
 }
 
 async function handleFormSubmission(form) {
@@ -539,7 +581,8 @@ async function handleFormSubmission(form) {
     const feedbackData = {
       name: data.name.trim(),
       email: data.email.trim(),
-      message: data.message.trim()
+      message: data.message.trim(),
+      rating: parseInt(data.rating) || 5
     };
     
     // Submit to backend API

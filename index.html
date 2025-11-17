@@ -323,6 +323,17 @@
         <form id="contactForm"> 
          <input type="text" name="name" id="contactName" placeholder="Your Name" required> 
          <input type="email" name="email" id="contactEmail" placeholder="Your Email" required> 
+         <div class="rating-container">
+           <label for="rating">Rate Your Experience:</label>
+           <div class="star-rating" id="starRating">
+             <span class="star" data-value="1">★</span>
+             <span class="star" data-value="2">★</span>
+             <span class="star" data-value="3">★</span>
+             <span class="star" data-value="4">★</span>
+             <span class="star" data-value="5">★</span>
+           </div>
+           <input type="hidden" name="rating" id="ratingValue" value="5" required>
+         </div>
          <textarea name="message" id="contactMessage" placeholder="Your Message" rows="5" required></textarea>
          <button type="submit" class="btn btn-primary">Send Message</button> 
         </form> 

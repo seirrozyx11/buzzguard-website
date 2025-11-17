@@ -1408,6 +1408,44 @@ html[data-theme="light"] .feedback-list li {
     min-height: 120px;
 }
 
+/* Star Rating */
+.rating-container {
+    margin: 20px 0;
+}
+
+.rating-container label {
+    display: block;
+    margin-bottom: 8px;
+    color: var(--light-text);
+    font-size: 0.95rem;
+    font-weight: 500;
+}
+
+.star-rating {
+    display: flex;
+    gap: 8px;
+    font-size: 2rem;
+    cursor: pointer;
+    user-select: none;
+}
+
+.star-rating .star {
+    color: rgba(255, 255, 255, 0.2);
+    transition: all 0.2s ease;
+    cursor: pointer;
+}
+
+.star-rating .star:hover,
+.star-rating .star.active {
+    color: #fbbf24;
+    text-shadow: 0 0 10px rgba(251, 191, 36, 0.5);
+    transform: scale(1.1);
+}
+
+.star-rating .star:active {
+    transform: scale(0.95);
+}
+
 /* ============================================
    FOOTER
    ============================================ */
