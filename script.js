@@ -668,10 +668,23 @@ async function loadRecentFeedback() {
       ? 'http://localhost:5000' 
       : 'https://buzzguard-backend.onrender.com';
     
-    const response = await fetch(`${API_BASE}/api/feedback/recent?limit=10`);
+    // Fetch recent feedback and stats in parallel
+    const [feedbackResponse, statsResponse] = await Promise.all([
+      fetch(`${API_BASE}/api/feedback/recent?limit=10`),
+      fetch(`${API_BASE}/api/feedback/stats`)
+    ]);
     
-    if (response.ok) {
-      const result = await response.json();
+    // Update total feedback count from stats
+    if (statsResponse.ok) {
+      const statsResult = await statsResponse.json();
+      if (statsResult.success && statsResult.data) {
+        updateFeedbackStats(statsResult.data);
+      }
+    }
+    
+    // Update recent feedback list
+    if (feedbackResponse.ok) {
+      const result = await feedbackResponse.json();
       if (result.success && result.data && result.data.length > 0) {
         // Cache API data in localStorage for persistence
         setFeedback(result.data);
@@ -686,6 +699,33 @@ async function loadRecentFeedback() {
   // Fallback to local storage if API fails
   const localFeedback = getFeedback();
   renderFeedback(localFeedback);
+}
+
+function updateFeedbackStats(stats) {
+  const totalCountEl = document.getElementById('totalFeedbackCount');
+  if (totalCountEl && stats.total !== undefined) {
+    // Animate the count
+    const target = stats.total;
+    let current = 0;
+    const duration = 1000; // 1 second
+    const increment = target / (duration / 16);
+    
+    const counter = setInterval(() => {
+      current += increment;
+      if (current >= target) {
+        current = target;
+        clearInterval(counter);
+      }
+      totalCountEl.textContent = Math.floor(current) + '+';
+    }, 16);
+    
+    // Store in localStorage for persistence
+    try {
+      localStorage.setItem('buzzguard_stats', JSON.stringify(stats));
+    } catch (e) {
+      console.warn('Failed to cache stats', e);
+    }
+  }
 }
 
 function showFormMessage(message, type = 'info') {
@@ -720,6 +760,20 @@ function showFormMessage(message, type = 'info') {
 const FEEDBACK_KEY = 'buzzguard_feedback_v1';
 
 function initFeedbackStore() {
+  // Load cached stats immediately for instant display
+  try {
+    const cachedStats = localStorage.getItem('buzzguard_stats');
+    if (cachedStats) {
+      const stats = JSON.parse(cachedStats);
+      const totalCountEl = document.getElementById('totalFeedbackCount');
+      if (totalCountEl && stats.total !== undefined) {
+        totalCountEl.textContent = stats.total + '+';
+      }
+    }
+  } catch (e) {
+    console.warn('Failed to load cached stats', e);
+  }
+  
   // Try to load from API first, then fallback to local storage or Firebase
   loadRecentFeedback();
   

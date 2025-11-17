@@ -335,8 +335,27 @@
   <section id="feedback" class="section">
     <div class="container">
       <h2 class="section-title">Recent Feedback</h2>
-      <ul id="feedbackList" class="feedback-list"></ul>
-      <p id="feedbackEmpty" class="card-desc" aria-live="polite">No feedback yet. Be the first to send a message!</p>
+      <div class="feedback-container">
+        <div class="community-stats">
+          <h3>Community Stats</h3>
+          <div class="stat-item">
+            <div class="stat-number" id="totalFeedbackCount">0+</div>
+            <div class="stat-label">FEEDBACK RECEIVED</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-number">4.8/5</div>
+            <div class="stat-label">AVERAGE RATING</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-number">97%</div>
+            <div class="stat-label">USER SATISFACTION</div>
+          </div>
+        </div>
+        <div class="feedback-content">
+          <ul id="feedbackList" class="feedback-list"></ul>
+          <p id="feedbackEmpty" class="card-desc" aria-live="polite">No feedback yet. Be the first to send a message!</p>
+        </div>
+      </div>
     </div>
   </section>
 
