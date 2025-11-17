@@ -710,33 +710,16 @@ function updateFeedbackStats(stats) {
     animateCounter(totalCountEl, stats.total, '+');
   }
   
-  // Update average rating (calculate from feedback data or use placeholder)
+  // Update average rating - REAL DATA from database
   const averageRatingEl = document.getElementById('averageRating');
-  if (averageRatingEl) {
-    // Calculate average rating: 4.8/5 based on feedback quality
-    // You can customize this calculation based on actual rating data
-    const avgRating = 4.8;
-    averageRatingEl.textContent = avgRating.toFixed(1) + '/5';
+  if (averageRatingEl && stats.averageRating !== undefined) {
+    averageRatingEl.textContent = stats.averageRating.toFixed(1) + '/5';
   }
   
-  // Update user satisfaction percentage
+  // Update user satisfaction - REAL DATA from database
   const userSatisfactionEl = document.getElementById('userSatisfaction');
-  if (userSatisfactionEl && stats.total !== undefined) {
-    // Calculate satisfaction rate based on all feedback being valuable
-    // Since all submitted feedback is considered "satisfied" users
-    // We use a formula: 97% base satisfaction for having a feedback system
-    let satisfactionRate = 97;
-    
-    // If we have feedback with different statuses, calculate engagement
-    if (stats.total > 0) {
-      const engagedFeedback = (stats.responded || 0) + (stats.read || 0);
-      if (engagedFeedback > 0) {
-        // Show actual engagement rate (but minimum 90%)
-        satisfactionRate = Math.max(90, Math.round((engagedFeedback / stats.total) * 100));
-      }
-    }
-    
-    animateCounter(userSatisfactionEl, satisfactionRate, '%');
+  if (userSatisfactionEl && stats.satisfactionPercentage !== undefined) {
+    animateCounter(userSatisfactionEl, stats.satisfactionPercentage, '%');
   }
   
   // Store in localStorage for persistence
